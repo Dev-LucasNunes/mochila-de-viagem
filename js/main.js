@@ -22,9 +22,18 @@ form.addEventListener("submit", (evt) => {
     quantidade: quantidade.value,
   };
 
-  criaElemento(itemAtual);
+  const existe = itens.find((element) => element.nome === nome.value); //procurar no array do localstorage se o elemento figitado é igual ao elemento que está lá
 
-  itens.push(itemAtual);
+  if (existe) {
+    itemAtual.id = existe.id;
+    atualizaElemento(itemAtual);
+    itens[itens.findIndex((element) => element.id === existe.id)] = itemAtual; //quando atualiza ele ve se é o mesmo elemento e troca pelo conteudo atualizado, pq no local storage é melhor sobreescrever o conteudo
+  } else {
+    itemAtual.id = itens[itens.length - 1] ? itens[itens.length - 1].id + 1 : 0;
+    criaElemento(itemAtual);
+
+    itens.push(itemAtual);
+  }
 
   localStorage.setItem("itens", JSON.stringify(itens)); //se deixar assim o local storage só vê que é um objeto, pq o localstorage só lê string, então tem que stringficar o objeto usando Json
   //com isso eu salvo essa informação no localstorage, só que assim eu sempre sobrescrevo as informaçoes salvas
@@ -41,12 +50,18 @@ function criaElemento(item) {
 
   const numeroitem = document.createElement("strong");
   numeroitem.innerHTML = item.quantidade;
-
+  numeroitem.dataset.id = item.id;
   novoItem.appendChild(numeroitem);
-  console.log(novoItem.innerHTML);
   novoItem.innerHTML += item.nome;
 
+  novoItem.appendChild(botaoDeleta(item.id));
+
   lista.appendChild(novoItem);
+}
+
+function atualizaElemento(item) {
+  const atualiza = document.querySelector("[data-id='" + item.id + "']"); //acha o atribute  vê se tem o mesmo id e se tiver atualiza
+  atualiza.innerHTML = item.quantidade;
 }
 
 //localstorage é um espaço para voce armazenar informaçoes no navegador, sites guardam informaçoes na sua maquina para poder ser usada posteriormente
@@ -59,3 +74,25 @@ function criaElemento(item) {
 //stringfy do Json pq o local storage só lê string
 
 //dados sensiveis se armazena em cookies não em localStorage
+
+function botaoDeleta(id) {
+  const elementoBotao = document.createElement("button");
+  elementoBotao.innerText = "X";
+
+  elementoBotao.addEventListener("click", function () {
+    deletaElemento(this.parentNode, id);
+  }); //alguns elementos criados como o button, tem que fazer o evento direto aonde ele foi criado
+
+  return elementoBotao;
+}
+
+function deletaElemento(tag, id) {
+  tag.remove();
+
+  itens.splice(
+    itens.findIndex((element) => element.id === id),
+    1
+  );
+
+  localStorage.setItem("itens", JSON.stringify(itens));
+}
